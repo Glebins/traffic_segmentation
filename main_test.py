@@ -9,11 +9,14 @@ import psutil
 import ipaddress
 import joblib
 import numpy as np
+from win11toast import toast
+
+from get_result import HybridSecuritySystem
 
 # ---------------- config ----------------
 ENGINE_PATH = "./publish/EtwTcp.exe"
 PIPE_NAME = r'\\.\pipe\NetMonitorPipe'
-LOG_PATH = "flow_log.csv"
+LOG_PATH = "flow_log_malw_1.csv"
 CLASS_LIST = ['Normal Traffic', 'DoS', 'DDoS', 'Bots', 'Port Scanning', 'Brute Force', 'Web Attacks']
 
 XGB_MODEL = "xgb_model.joblib"
@@ -222,7 +225,6 @@ def update_flow_from_packet(pkt: NetworkPacket):
     with flows_lock:
         flow = flows.get(key)
         if flow is None:
-            # create new aggregated flow
             flow = {
                 "pid": pid,
                 "proc_name": pkt.proc_name,
@@ -263,8 +265,7 @@ def update_flow_from_packet(pkt: NetworkPacket):
             is_forward = True
         else:
             is_forward = False
-
-        # increment counters
+        
         flow["all_sizes"].append(length)
         flow["all_ts"].append(t)
         if is_forward:
@@ -521,6 +522,19 @@ def process_and_finalize(key, flow):
     pid = flow.get("pid", 0)
     proc_name = flow.get("proc_name") or "Unknown"
 
+    detector = HybridSecuritySystem()
+    result = detector.instance_analyze_flow(features)
+
+    if 'HIGH' in result['status'] or 'CRITICAL' in result['status']:
+        title = "Net monitoring: Suspicious packet"
+
+        alert_message = f"Process name: {proc_name}\nVerdict: {result['status']} (Prob: {result['threat_prob']:.2f})"
+
+        try:
+            toast(title, alert_message, duration='long', audio='ms-winsoundevent:Notification.Looping.Alarm')
+        except:
+            pass
+
     print(f"[{datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')}] Flow {key}: proc={proc_name}, pid={pid}, label={label}, score={score:.3f}, pkts={total_pkts}")
 
     if proc_name == 'python':
@@ -533,12 +547,10 @@ def process_and_finalize(key, flow):
 
     try:
         import csv, os
-        FEATURES_CSV = "flow_features.csv"
+        FEATURES_CSV = "flow_features_malw_1.csv"
 
-        # Prepare header if file does not exist
         write_header = not os.path.exists(FEATURES_CSV)
 
-        # Build header: metadata + feature columns
         if write_header:
             feat_count = len(features)
             header = [
@@ -553,14 +565,13 @@ def process_and_finalize(key, flow):
                 "score",
                 "total_pkts"
             ]
-            # feature names feat_0..feat_n-1
+
             header += [f"feat_{i}" for i in range(feat_count)]
 
             with open(FEATURES_CSV, "w", encoding="utf-8", newline='') as hf:
                 writer = csv.writer(hf)
                 writer.writerow(header)
-
-        # Extract key fields safely
+        
         try:
             k_pid = key[0]
             k_src = key[1]
@@ -584,14 +595,13 @@ def process_and_finalize(key, flow):
             f"{score:.6f}",
             total_pkts
         ]
-        # append features as plain numeric values
+
         row += [("" if v is None else v) for v in features]
 
         with open(FEATURES_CSV, "a", encoding="utf-8", newline='') as hf:
             writer = csv.writer(hf)
             writer.writerow(row)
     except Exception as e:
-        # Fail silently but print diagnostic to console
         print(f"Failed to write features CSV: {e}")
 
 # ---------------- timeout watcher ----------------

@@ -278,10 +278,10 @@
 
 
 
-import pandas as pd
-CSV_PATH = "test_mal.csv"
-last_row = pd.read_csv(CSV_PATH).iloc[-2, [10, 11, 12, 13, 16, 17, 20, 21, 22, 23, 24, 26, 40, 41, 50, 59, 60]]
-print(last_row.tolist())
+# import pandas as pd
+# CSV_PATH = "test_mal.csv"
+# last_row = pd.read_csv(CSV_PATH).iloc[-2, [10, 11, 12, 13, 16, 17, 20, 21, 22, 23, 24, 26, 40, 41, 50, 59, 60]]
+# print(last_row.tolist())
 
 
 
@@ -299,3 +299,11 @@ print(last_row.tolist())
 # print(f'Было строк: {len(df)}')
 # print(f'Now: {len(balanced_df)}')
 # print(f'Unique processes: {balanced_df["proc_name"].nunique()}')
+
+from win11toast import toast
+toast(
+            'qwdqwd',
+            'qwasxasx',
+            duration='long',
+            audio='ms-winsoundevent:Notification.Looping.Alarm'
+        )

@@ -7,7 +7,10 @@ import numpy as np
 from sklearn.preprocessing import StandardScaler
 import joblib
 
-CSV_PATH = "flow_features_data.csv"
+import warnings
+warnings.filterwarnings("ignore", category=UserWarning, module="sklearn")
+
+CSV_PATH = "balanced_only_quiet.csv"
 
 def read_df(csv_path=CSV_PATH):
     df = pd.read_csv(csv_path).iloc[:, [10, 11, 12, 13, 16, 17, 20, 21, 22, 23, 24, 26, 40, 41, 50, 59, 60]]
@@ -46,7 +49,7 @@ class NetworkAE(nn.Module):
 # 2. КЛАСС ДЛЯ ПРИМЕНЕНИЯ ОБУЧЕННОЙ МОДЕЛИ
 # ==========================================
 class AnomalyDetector:
-    def __init__(self, model_path="network_ae.pth", scaler_path="scaler_ae.pkl", threshold_path="threshold.npy"):
+    def __init__(self, model_path="network_ae.pth", scaler_path="scaler_ae.pkl", threshold_path="threshold_ae.npy"):
         self.scaler = joblib.load(scaler_path)
         self.threshold = np.load(threshold_path)
 
@@ -125,7 +128,7 @@ def train_model():
         errors = torch.mean((X_tensor - preds)**2, dim=1).numpy()
         threshold = np.percentile(errors, 99)
         print(f"Suggested Anomaly Threshold: {threshold:.6f}")
-        np.save("threshold.npy", threshold)
+        np.save("threshold_ae.npy", threshold)
 
 if __name__ == '__main__':
     train_model()
@@ -133,13 +136,23 @@ if __name__ == '__main__':
     detector = AnomalyDetector()
     
     # Пример данных нового потока - UDP flood
-    new_flow = [80, 850724.9355316162, 3000, 23547223, 7849.074333333333, 4064.4541207245206, 0.0, 0.0, 27679008.827083915, 3526.4042168051724, 283.6695350222128, 46014.07051086426, 3526.4042168051724, 0.0, 7849.074333333333, 0.0, 0.0]
-    is_anomaly, score = detector.check_anomaly(new_flow)
-    
-    print(f"Flow Score (MSE): {score:.2f}")
+    # new_flow = [80, 850724.9355316162, 3000, 23547223, 7849.074333333333, 4064.4541207245206, 0.0, 0.0, 27679008.827083915, 3526.4042168051724, 283.6695350222128, 46014.07051086426, 3526.4042168051724, 0.0, 7849.074333333333, 0.0, 0.0]
+
+    logs_malw = read_df('./flow_features_malw.csv').to_numpy().tolist()
+    # print(logs_malw)
+
     print(f"Threshold: {detector.threshold:.2f}")
-    
-    if is_anomaly:
-        print(">>> ALERT: Anomaly Detected! <<<")
-    else:
-        print("Flow is normal.")
+
+    for i, flow in enumerate(logs_malw):
+        is_anomaly, score = detector.check_anomaly(flow)
+
+        res_str = f"{i + 2} "
+
+        res_str += f"Flow Score (MSE): {score:.2f}"
+        
+        if is_anomaly:
+            res_str += " >>> ALERT: Anomaly Detected! <<< "
+        else:
+            res_str += " Flow is normal."
+
+        print(res_str)
