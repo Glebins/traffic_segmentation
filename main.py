@@ -11,7 +11,7 @@ import joblib
 import numpy as np
 from win11toast import toast
 
-from get_result import HybridSecuritySystem
+from threat_analysis import HybridSecuritySystem
 
 # ---------------- config ----------------
 ENGINE_PATH = "./publish/EtwTcp.exe"

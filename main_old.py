@@ -5,7 +5,7 @@ import numpy as np
 from scapy.all import sniff, IP, TCP, UDP, ICMP
 import psutil
 import joblib
-from get_result import HybridSecuritySystem
+from threat_analysis import HybridSecuritySystem
 import ipaddress
 
 import os

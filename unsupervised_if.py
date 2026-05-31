@@ -7,7 +7,7 @@ import joblib
 import warnings
 warnings.filterwarnings("ignore", category=UserWarning, module="sklearn")
 
-CSV_PATH = "balanced_only_quiet.csv"
+CSV_PATH = "flow_features_test.csv"
 
 def read_df(csv_path=CSV_PATH):
     df = pd.read_csv(csv_path).iloc[:, [10, 11, 12, 13, 16, 17, 20, 21, 22, 23, 24, 26, 40, 41, 50, 59, 60]]
