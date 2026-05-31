@@ -17,7 +17,7 @@ from dataset import load_datasets       # Ваш модуль загрузки �
 from model import MLPNet                 # Класс модели из model.py
 
 # ─────────── Параметры ─────────────────────────────────────────────────────────
-MODEL_PATH = "mlp_model_7.pth"   # <- Путь к сохранённому чекпоинту из train.py
+MODEL_PATH = "mlp_model.pth"   # <- Путь к сохранённому чекпоинту из train.py
 # ───────────────────────────────────────────────────────────────────────────────
 
 def load_model_and_scaler(path, device):
